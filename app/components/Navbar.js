@@ -9,7 +9,7 @@ export default function Navbar({ active, setActive }) {
   ];
 
   return (
-    <nav className="bg-gray-900/95 backdrop-blur-lg border-b border-cyan-500/20 sticky top-0 z-50 w-screen left-0 right-0">
+    <nav className="bg-gray-900/95 backdrop-blur-lg border-b border-cyan-500/20 sticky top-0 z-50 w-full left-0 right-0">
       <div className="w-full px-0">
         <div className="flex justify-between items-center h-16 w-full">
           <div className="flex items-center space-x-3 pl-4">

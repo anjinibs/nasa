@@ -32,8 +32,16 @@ export default function PublicationCard({ publication }) {
     }
   };
 
+  const topicsArray = Array.isArray(publication.topics)
+    ? publication.topics
+    : [];
+
+  const maxTopicsToShow = 50;
+  const hasMoreTopics = topicsArray.length > maxTopicsToShow;
+
   return (
     <>
+      {/* Publication Card */}
       <div
         className="relative border border-gray-700 rounded-lg p-6 bg-gradient-to-r from-gray-700 to-gray-800 cursor-pointer hover:scale-105 transform transition-all duration-300 flex flex-col justify-around "
       >
@@ -62,12 +70,14 @@ export default function PublicationCard({ publication }) {
         </div>
       </div>
 
+      {/* Modal */}
       {showModal && (
         <div
           className="fixed inset-0 flex z-50 items-center justify-center backdrop-blur-sm"
           onClick={handleOverlayClick}
         >
           <div className="bg-gradient-to-r from-blue-900 via-purple-900 to-cyan-900 border border-cyan-500/40 rounded-2xl shadow-2xl max-w-xl w-full relative p-8 mx-4 flex flex-col">
+            {/* Close Button */}
             <button
               onClick={() => {
                 setShowModal(false);
@@ -83,21 +93,29 @@ export default function PublicationCard({ publication }) {
               {publication.title}
             </h2>
 
+            {/* Topics */}
             <div className="flex flex-wrap gap-2 mb-4">
-              {publication.topics?.map((topic) => (
+              {topicsArray.slice(0, maxTopicsToShow).map((topic, index) => (
                 <span
-                  key={topic}
+                  key={index}
                   className="bg-cyan-700/80 text-white px-3 py-1 rounded-full text-xs font-semibold"
                 >
                   {topic}
                 </span>
               ))}
+              {hasMoreTopics && (
+                <span className="bg-gray-600/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                  +{topicsArray.length - maxTopicsToShow} more
+                </span>
+              )}
             </div>
 
+            {/* Summary */}
             <div className="mb-6 flex-1">
               <p className="text-gray-200 text-base">{publication.summary}</p>
             </div>
 
+            {/* Read Publication Button */}
             <div className="mt-auto flex space-x-4">
               <a
                 href={publication.link}
@@ -110,6 +128,7 @@ export default function PublicationCard({ publication }) {
               </a>
             </div>
 
+            {/* AI Summary */}
             {showAI && (
               <div className="mt-6 bg-black/30 rounded-xl p-4 border border-cyan-500/30">
                 <h3 className="text-xl font-bold text-cyan-300 mb-2">AI Summary</h3>
@@ -130,4 +149,3 @@ export default function PublicationCard({ publication }) {
     </>
   );
 }
-  
