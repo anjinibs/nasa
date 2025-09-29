@@ -1,147 +1,106 @@
 "use client";
+import React, { useState } from "react";
 
-import React, { useState, useEffect } from "react";
-
-export default function PublicationCard({ publication }) {
-  const [showAI, setShowAI] = useState(false);
+export default function PublicationCard({ publication, onClick }) {
   const [showModal, setShowModal] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [aiSummary, setAiSummary] = useState("");
+  const [keyPoints, setKeyPoints] = useState([]);
 
-  const handleAIClick = (e) => {
-    e.stopPropagation(); // Prevents card click
-    setShowAI(true);
+  // Handle AI Summary modal
+  const handleAIClick = async (e) => {
+    e.stopPropagation();
     setShowModal(true);
-  };
+    setLoadingAI(true);
 
-  // Close modal on Escape
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape") {
-        setShowModal(false);
-        setShowAI(false);
-      }
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, []);
+    try {
+      const res = await fetch("/api/ai-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link: publication.link, title: publication.title }),
+      });
 
-  // Click outside overlay to close
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      setShowModal(false);
-      setShowAI(false);
+      const data = await res.json();
+      setAiSummary(data.aiSummary || "No summary available.");
+      setKeyPoints(data.keyPoints || []);
+    } catch (err) {
+      console.error(err);
+      setAiSummary("Error generating summary.");
+    } finally {
+      setLoadingAI(false);
     }
+
+    // Count as recently opened when opening AI modal
+    addToRecentStorage(publication);
+    if (onClick) onClick(publication);
   };
 
-  const topicsArray = Array.isArray(publication.topics)
-    ? publication.topics
-    : [];
+  // Handle card click
+  const handleCardClick = () => {
+    addToRecentStorage(publication);
+    if (onClick) onClick(publication);
+  };
 
-  const maxTopicsToShow = 50;
-  const hasMoreTopics = topicsArray.length > maxTopicsToShow;
+  // Add to localStorage for Recently Opened
+  const addToRecentStorage = (pub) => {
+    const stored = JSON.parse(localStorage.getItem("recentPublications") || "[]");
+    const updated = [pub, ...stored.filter(p => p.link !== pub.link)].slice(0, 10);
+    localStorage.setItem("recentPublications", JSON.stringify(updated));
+  };
 
   return (
     <>
-      {/* Publication Card */}
       <div
-        className="relative border border-gray-700 rounded-lg p-6 bg-gradient-to-r from-gray-700 to-gray-800 cursor-pointer hover:scale-105 transform transition-all duration-300 flex flex-col justify-around "
+        onClick={handleCardClick}
+        className="border border-gray-700 rounded-lg p-6 bg-gradient-to-r from-gray-700 to-gray-800 cursor-pointer hover:scale-105 transform transition-all duration-300 flex flex-col justify-between"
       >
         <h3 className="text-xl font-semibold text-white">{publication.title}</h3>
-        <p className="text-gray-300 mt-2 mb-4 line-clamp-3">
-          {publication.summary}
-        </p>
-
-        <div className="flex space-x-4 justify-between">
+        <div className="flex space-x-4 justify-between mt-4">
           <a
             href={publication.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-4 py-2 bg-blue-800 text-white rounded-full shadow-lg hover:scale-105 transform transition-all duration-300"
-            onClick={(e) => e.stopPropagation()}
+            className="px-4 py-2 bg-blue-800 text-white rounded-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              addToRecentStorage(publication); // update recently opened
+              if (onClick) onClick(publication);
+            }}
           >
-            Read more
+            Read
           </a>
-
           <button
             onClick={handleAIClick}
-            className="inline-block px-4 py-2 bg-blue-800 text-white rounded-full shadow-lg hover:scale-105 transform transition-all duration-300"
+            className="px-4 py-2 bg-blue-800 text-white rounded-full"
           >
             🤖 AI Summary
           </button>
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 flex z-50 items-center justify-center backdrop-blur-sm"
-          onClick={handleOverlayClick}
+          className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50"
+          onClick={() => setShowModal(false)}
         >
-          <div className="bg-gradient-to-r from-blue-900 via-purple-900 to-cyan-900 border border-cyan-500/40 rounded-2xl shadow-2xl max-w-xl w-full relative p-8 mx-4 flex flex-col">
-            {/* Close Button */}
-            <button
-              onClick={() => {
-                setShowModal(false);
-                setShowAI(false);
-              }}
-              className="absolute top-4 right-4 text-cyan-300 hover:text-white text-2xl font-bold"
-              aria-label="Close"
-            >
-              ×
-            </button>
-
-            <h2 className="text-3xl font-bold text-cyan-300 mb-4 tracking-tight">
-              {publication.title}
-            </h2>
-
-            {/* Topics */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {topicsArray.slice(0, maxTopicsToShow).map((topic, index) => (
-                <span
-                  key={index}
-                  className="bg-cyan-700/80 text-white px-3 py-1 rounded-full text-xs font-semibold"
-                >
-                  {topic}
-                </span>
-              ))}
-              {hasMoreTopics && (
-                <span className="bg-gray-600/70 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                  +{topicsArray.length - maxTopicsToShow} more
-                </span>
-              )}
-            </div>
-
-            {/* Summary */}
-            <div className="mb-6 flex-1">
-              <p className="text-gray-200 text-base">{publication.summary}</p>
-            </div>
-
-            {/* Read Publication Button */}
-            <div className="mt-auto flex space-x-4">
-              <a
-                href={publication.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block px-5 py-2 bg-cyan-600 text-white rounded-lg shadow hover:bg-purple-600 transition-all duration-300 font-semibold"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Read Publication
-              </a>
-            </div>
-
-            {/* AI Summary */}
-            {showAI && (
-              <div className="mt-6 bg-black/30 rounded-xl p-4 border border-cyan-500/30">
-                <h3 className="text-xl font-bold text-cyan-300 mb-2">AI Summary</h3>
-                <p className="text-gray-200 mb-4">{publication.aiSummary}</p>
-                <h4 className="text-lg font-semibold text-purple-300 mb-2">
-                  Key Points
-                </h4>
-                <ul className="list-disc ml-6 text-gray-200">
-                  {publication.keyPoints?.map((point, idx) => (
-                    <li key={idx}>{point}</li>
-                  ))}
-                </ul>
-              </div>
+          <div
+            className="bg-gradient-to-r from-blue-900 via-purple-900 to-cyan-900 p-8 rounded-2xl max-w-xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl text-cyan-300 mb-4">{publication.title}</h2>
+            {loadingAI ? (
+              <p className="text-gray-400 animate-pulse">Generating summary...</p>
+            ) : (
+              <>
+                <p className="text-gray-200">{aiSummary}</p>
+                {keyPoints.length > 0 && (
+                  <ul className="text-gray-200 list-disc ml-6 mt-2">
+                    {keyPoints.map((kp, i) => (
+                      <li key={i}>{kp}</li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </div>
         </div>

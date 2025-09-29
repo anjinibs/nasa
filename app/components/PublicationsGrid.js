@@ -1,60 +1,47 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PublicationCard from "./PublicationCard";
-import PublicationDetailModal from "./PublicationDetailModal";
-
-const publications = [
-  {
-    title: 'High-precision method for cyclic loading of small-animal vertebrae to assess bone quality.',
-    summary:
-      'This method enables accurate cyclic loading of vertebrae in small animals, allowing researchers to assess bone quality and mechanical properties under controlled conditions.',
-    link: 'https://www.example.com/publication/bone-quality',
-    topics: ['Bone Quality', 'Cyclic Loading', 'Small Animal'],
-    aiSummary: 'AI summary for cyclic loading study ...',
-    keyPoints: ['Point A', 'Point B'],
-  },
-  {
-    title: 'TNO1 is involved in salt tolerance and vacuolar trafficking in Arabidopsis.',
-    summary:
-      'This research uncovers the role of TNO1 in regulating salt tolerance and vacuolar trafficking, providing new insights into plant stress responses.',
-    link: 'https://www.example.com/publication/tno1-arabidopsis',
-    topics: ['Salt Tolerance', 'Vacuolar Trafficking', 'Arabidopsis'],
-    aiSummary: 'AI summary for TNO1 …',
-    keyPoints: ['Key A', 'Key B'],
-  },
-  {
-    title: 'Effects of Microgravity on Bone Density in Astronauts',
-    summary:
-      'This study explores how extended exposure to microgravity impacts bone density in astronauts, highlighting key findings and recommendations for future missions.',
-    link: 'https://www.example.com/publication/space-bone-density',
-    topics: ['Microgravity', 'Bone Density', 'Space Health'],
-    aiSummary: 'AI Summary: Microgravity significantly reduces bone density in astronauts …',
-    keyPoints: ['Microgravity causes bone loss', 'Risk of osteoporosis', 'Countermeasures important'],
-  },
-];
+import Papa from "papaparse";
 
 export default function PublicationsGrid() {
-  const [selectedIdx, setSelectedIdx] = useState(null);
+  const [publications, setPublications] = useState([]);
+
+  useEffect(() => {
+    const fetchCSV = async () => {
+      try {
+        const csvUrl =
+          "https://raw.githubusercontent.com/jgalazka/SB_publications/main/SB_publication_PMC.csv";
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+
+        const parsed = Papa.parse(text, { header: true });
+        const data = parsed.data
+          .filter(row => row.title && row.link)
+          .map(row => ({
+            title: row.title.trim(),
+            link: row.link.trim(),
+          }));
+
+        setPublications(data);
+      } catch (err) {
+        console.error("Error fetching CSV:", err);
+      }
+    };
+
+    fetchCSV();
+  }, []);
 
   return (
     <div className="w-full px-4 py-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {publications.map((pub, idx) => (
-          <PublicationCard
-            key={idx}
-            publication={pub}
-            onClick={() => setSelectedIdx(idx)}
-          />
-        ))}
+        {publications.length === 0 ? (
+          <p className="text-center text-gray-300 animate-pulse">Loading publications...</p>
+        ) : (
+          publications.map((pub, idx) => (
+            <PublicationCard key={idx} publication={pub} />
+          ))
+        )}
       </div>
-
-      {selectedIdx !== null && (
-        <PublicationDetailModal
-          publication={publications[selectedIdx]}
-          onClose={() => setSelectedIdx(null)}
-        />
-      )}
     </div>
   );
 }

@@ -1,38 +1,64 @@
 "use client";
+
 import Explorer from "./components/Explorer";
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import PublicationCard from "./components/PublicationCard";
 import TrendingTopics from "./components/TrendingTopics";
 import DashboardPage from "./components/DashBoard";
+import Papa from "papaparse";
+
+// Helper to sanitize HTML from AI summary
+function stripHTML(htmlString) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = htmlString;
+  return tmp.textContent || tmp.innerText || "";
+}
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("dashboard"); // main navbar tab
-  const [isResearchPage, setIsResearchPage] = useState(false); // false = Bioscience, true = Research
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [isResearchPage, setIsResearchPage] = useState(false);
 
-  // Existing Bioscience page state
   const [search, setSearch] = useState("");
   const [publications, setPublications] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [searchCounts, setSearchCounts] = useState({});
   const [selectedPublication, setSelectedPublication] = useState(null);
 
-  // Load local JSON or API data
+  // ----------------- Fetch CSV from GitHub -----------------
   useEffect(() => {
-    const fetchLocal = async () => {
+    const fetchCSV = async () => {
       try {
-        const response = await fetch("/data.json");
-        const data = await response.json();
+        const csvUrl =
+          "https://raw.githubusercontent.com/jgalazka/SB_publications/main/SB_publication_PMC.csv";
+        const res = await fetch(csvUrl);
+        const text = await res.text();
+
+        const parsed = Papa.parse(text, { header: true });
+        const data = parsed.data
+          .filter(row => row.Title && row.Link) // remove empty rows
+          .map(row => ({
+            title: row.Title.trim(),
+            link: row.Link.trim(),
+            pmcid: extractPMCID(row.Link),
+            category: row.Topics ? row.Topics.split(",")[0].trim() : "Other", // first topic as category
+            topics: row.Topics ? row.Topics.split(",").map(t => t.trim()) : [],
+            summary: "",
+            aiSummary: "",
+            keyPoints: [],
+          }));
+
         setPublications(data);
         setFiltered(data);
       } catch (err) {
-        console.error("Error fetching publications:", err);
+        console.error("Error fetching CSV:", err);
       }
     };
-    fetchLocal();
+
+    fetchCSV();
   }, []);
 
-  // Filter publications based on search
+  // ----------------- Filter publications based on search -----------------
   useEffect(() => {
     const lower = search.toLowerCase();
     const filteredPubs = publications.filter((pub) =>
@@ -49,19 +75,32 @@ export default function Home() {
     setSelectedPublication(null);
   }, [search, publications]);
 
-  // Reset selected publication on tab change
   useEffect(() => {
     setSelectedPublication(null);
   }, [activeTab]);
 
-  // Render content based on active tab
+  // ----------------- Helper to extract PMCID from link -----------------
+  function extractPMCID(link) {
+    const match = link.match(/PMC\d+/);
+    return match ? match[0] : null;
+  }
+
+  // ----------------- Render Content -----------------
   let content;
   if (activeTab === "dashboard") {
-    content = <DashboardPage />;
+    // Show loading if publications are not loaded
+    if (publications.length === 0) {
+      content = (
+        <div className="text-white text-center mt-20 animate-pulse">
+          Loading publications from GitHub...
+        </div>
+      );
+    } else {
+      content = <DashboardPage publications={publications} />;
+    }
   } else if (activeTab === "publications") {
     content = (
       <div className="relative text-center">
-        {/* Toggle button on top-right */}
         <button
           onClick={() => setIsResearchPage(!isResearchPage)}
           className="absolute right-5 bg-purple-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-purple-800 transition-colors"
@@ -69,7 +108,6 @@ export default function Home() {
           {isResearchPage ? "Go to Bioscience" : "Go to Explorer "}
         </button>
 
-        {/* Page content */}
         {isResearchPage ? (
           <ResearchPage />
         ) : (
@@ -95,14 +133,14 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-blue-900 via-black to-purple-900 font-sans">
       <Navbar active={activeTab} setActive={setActiveTab} />
       <div className="max-w-full mx-5">{content}</div>
-      <footer className="mt-5 text-center text-gray-400 fixed bottom-0 bg-gray-900/95 w-full p-3  text-sm">
+      <footer className="mt-5 text-center text-gray-400 fixed bottom-0 bg-gray-900/95 w-full p-3 text-sm">
         Powered by NASA Space Biology | Challenge Dashboard
       </footer>
     </main>
   );
 }
 
-// ------------------ Empty NASA Research Page ------------------
+// ------------------ Research Page ------------------
 function ResearchPage() {
   return (
     <div className="mt-10 text-white">
@@ -110,14 +148,13 @@ function ResearchPage() {
         NASA Research Explore
       </h1>
       <p className="mt-2 text-muted-foreground w-full mx-auto">
-        {/* Add your NASA Research content here */}
-        <Explorer/>
+        <Explorer />
       </p>
     </div>
   );
 }
 
-// ------------------ Existing NASA Bioscience Page ------------------
+// ------------------ Bioscience Page ------------------
 function BiosciencePage({ search, setSearch, filtered, searchCounts, setSelectedPublication }) {
   return (
     <div className="mt-10 text-center text-purple-400">
@@ -143,7 +180,7 @@ function BiosciencePage({ search, setSearch, filtered, searchCounts, setSelected
         onTopicSelect={(topic) => setSearch(topic)}
       />
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.length === 0 ? (
           <p className="text-center text-gray-300 animate-pulse">No results found.</p>
         ) : (
