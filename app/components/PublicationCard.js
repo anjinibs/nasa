@@ -32,7 +32,6 @@ export default function PublicationCard({ publication, onClick }) {
 
     // Count as recently opened when opening AI modal
     addToRecentStorage(publication);
-    if (onClick) onClick(publication);
   };
 
   // Handle card click
@@ -52,26 +51,25 @@ export default function PublicationCard({ publication, onClick }) {
     <>
       <div
         onClick={handleCardClick}
-        className="border border-gray-700 rounded-lg p-6 bg-gradient-to-r from-gray-700 to-gray-800 cursor-pointer hover:scale-105 transform transition-all duration-300 flex flex-col justify-between"
+        className="border border-gray-700 rounded-lg p-6 bg-gradient-to-br from-gray-800 to-gray-900 cursor-pointer hover:scale-105 transform transition-all duration-300 flex flex-col justify-between shadow-lg"
       >
-        <h3 className="text-xl font-semibold text-white">{publication.title}</h3>
+        <h3 className="text-xl font-semibold text-cyan-300">{publication.title}</h3>
         <div className="flex space-x-4 justify-between mt-4">
           <a
             href={publication.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-blue-800 text-white rounded-full"
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 transition-all duration-200"
             onClick={(e) => {
               e.stopPropagation();
               addToRecentStorage(publication); // update recently opened
-              if (onClick) onClick(publication);
             }}
           >
             Read
           </a>
           <button
             onClick={handleAIClick}
-            className="px-4 py-2 bg-blue-800 text-white rounded-full"
+            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full hover:from-purple-700 hover:to-pink-700 transition-all duration-200"
           >
             🤖 AI Summary
           </button>
@@ -84,7 +82,7 @@ export default function PublicationCard({ publication, onClick }) {
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-gradient-to-r from-blue-900 via-purple-900 to-cyan-900 p-8 rounded-2xl max-w-xl w-full"
+            className="bg-gradient-to-r from-blue-900 via-purple-900 to-cyan-900 p-8 rounded-2xl max-w-xl w-full shadow-2xl border border-cyan-400"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl text-cyan-300 mb-4">{publication.title}</h2>

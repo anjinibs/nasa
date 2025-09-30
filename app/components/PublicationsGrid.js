@@ -3,33 +3,41 @@ import { useState, useEffect } from "react";
 import PublicationCard from "./PublicationCard";
 import Papa from "papaparse";
 
-export default function PublicationsGrid() {
+export default function PublicationsGrid({ filterKey }) {
   const [publications, setPublications] = useState([]);
 
   useEffect(() => {
-    const fetchCSV = async () => {
+    const fetchPublications = async () => {
       try {
-        const csvUrl =
-          "https://raw.githubusercontent.com/jgalazka/SB_publications/main/SB_publication_PMC.csv";
-        const res = await fetch(csvUrl);
-        const text = await res.text();
+        let data = [];
+        if (filterKey === "opened") {
+          const response = await fetch("/api/recent-research");
+          if (!response.ok) {
+            throw new Error("Failed to fetch recent research");
+          }
+          data = await response.json();
+        } else {
+          const csvUrl =
+            "https://raw.githubusercontent.com/jgalazka/SB_publications/main/SB_publication_PMC.csv";
+          const res = await fetch(csvUrl);
+          const text = await res.text();
 
-        const parsed = Papa.parse(text, { header: true });
-        const data = parsed.data
-          .filter(row => row.title && row.link)
-          .map(row => ({
-            title: row.title.trim(),
-            link: row.link.trim(),
-          }));
-
+          const parsed = Papa.parse(text, { header: true });
+          data = parsed.data
+            .filter((row) => row.title && row.link)
+            .map((row) => ({
+              title: row.title.trim(),
+              link: row.link.trim(),
+            }));
+        }
         setPublications(data);
       } catch (err) {
-        console.error("Error fetching CSV:", err);
+        console.error("Error fetching data:", err);
       }
     };
 
-    fetchCSV();
-  }, []);
+    fetchPublications();
+  }, [filterKey]);
 
   return (
     <div className="w-full px-4 py-8">

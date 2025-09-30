@@ -25,6 +25,9 @@ export default function Home() {
   const [searchCounts, setSearchCounts] = useState({});
   const [selectedPublication, setSelectedPublication] = useState(null);
 
+  // NEW: Recently opened state
+  const [recentlyOpened, setRecentlyOpened] = useState([]);
+
   // ----------------- Fetch CSV from GitHub -----------------
   useEffect(() => {
     const fetchCSV = async () => {
@@ -36,13 +39,13 @@ export default function Home() {
 
         const parsed = Papa.parse(text, { header: true });
         const data = parsed.data
-          .filter(row => row.Title && row.Link) // remove empty rows
-          .map(row => ({
+          .filter((row) => row.Title && row.Link) // remove empty rows
+          .map((row) => ({
             title: row.Title.trim(),
             link: row.Link.trim(),
             pmcid: extractPMCID(row.Link),
             category: row.Topics ? row.Topics.split(",")[0].trim() : "Other", // first topic as category
-            topics: row.Topics ? row.Topics.split(",").map(t => t.trim()) : [],
+            topics: row.Topics ? row.Topics.split(",").map((t) => t.trim()) : [],
             summary: "",
             aiSummary: "",
             keyPoints: [],
@@ -56,7 +59,18 @@ export default function Home() {
     };
 
     fetchCSV();
+
+    // Load recently opened from localStorage
+    const saved = localStorage.getItem("recentlyOpened");
+    if (saved) {
+      setRecentlyOpened(JSON.parse(saved));
+    }
   }, []);
+
+  // ----------------- Save recently opened to localStorage -----------------
+  useEffect(() => {
+    localStorage.setItem("recentlyOpened", JSON.stringify(recentlyOpened));
+  }, [recentlyOpened]);
 
   // ----------------- Filter publications based on search -----------------
   useEffect(() => {
@@ -85,6 +99,28 @@ export default function Home() {
     return match ? match[0] : null;
   }
 
+  // ----------------- Handle opening publication -----------------
+  const handleOpenPublication = (pub) => {
+    setSelectedPublication(pub);
+
+    setRecentlyOpened((prev) => {
+      const exists = prev.find((p) => p.link === pub.link);
+      let updated;
+      if (exists) {
+        // Move it to the top
+        updated = [pub, ...prev.filter((p) => p.link !== pub.link)];
+      } else {
+        // Add new, max 10
+        updated = [pub, ...prev].slice(0, 10);
+      }
+      return updated;
+    });
+  };
+
+  const handleResearchAdded = (newResearch) => {
+    setPublications([newResearch, ...publications]);
+  };
+
   // ----------------- Render Content -----------------
   let content;
   if (activeTab === "dashboard") {
@@ -96,7 +132,13 @@ export default function Home() {
         </div>
       );
     } else {
-      content = <DashboardPage publications={publications} />;
+      content = (
+        <DashboardPage
+          publications={publications}
+          recentlyOpened={recentlyOpened}
+          onResearchAdded={handleResearchAdded}
+        />
+      );
     }
   } else if (activeTab === "publications") {
     content = (
@@ -116,7 +158,7 @@ export default function Home() {
             setSearch={setSearch}
             filtered={filtered}
             searchCounts={searchCounts}
-            setSelectedPublication={setSelectedPublication}
+            onOpenPublication={handleOpenPublication}
           />
         )}
       </div>
@@ -155,14 +197,21 @@ function ResearchPage() {
 }
 
 // ------------------ Bioscience Page ------------------
-function BiosciencePage({ search, setSearch, filtered, searchCounts, setSelectedPublication }) {
+function BiosciencePage({
+  search,
+  setSearch,
+  filtered,
+  searchCounts,
+  onOpenPublication,
+}) {
   return (
     <div className="mt-10 text-center text-purple-400">
       <h1 className="text-3xl md:text-4xl font-bold text-primary">
         Explore NASA Bioscience
       </h1>
       <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-        An AI-powered dashboard to search, summarize, and understand decades of space biology research.
+        An AI-powered dashboard to search, summarize, and understand decades of
+        space biology research.
       </p>
 
       <div className="flex mb-8 justify-center mt-5">
@@ -182,13 +231,15 @@ function BiosciencePage({ search, setSearch, filtered, searchCounts, setSelected
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.length === 0 ? (
-          <p className="text-center text-gray-300 animate-pulse">No results found.</p>
+          <p className="text-center text-gray-300 animate-pulse">
+            No results found.
+          </p>
         ) : (
           filtered.map((pub, idx) => (
             <PublicationCard
               key={idx}
               publication={pub}
-              onClick={() => setSelectedPublication(pub)}
+              onClick={() => onOpenPublication(pub)}
             />
           ))
         )}
