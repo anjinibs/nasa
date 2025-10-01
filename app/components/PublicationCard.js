@@ -77,33 +77,72 @@ export default function PublicationCard({ publication, onClick }) {
         </div>
       </div>
 
-      {showModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50"
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            className="bg-gradient-to-r from-blue-900 via-purple-900 to-cyan-900 p-8 rounded-2xl max-w-xl w-full shadow-2xl border border-cyan-400"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl text-cyan-300 mb-4">{publication.title}</h2>
-            {loadingAI ? (
-              <p className="text-gray-400 animate-pulse">Generating summary...</p>
-            ) : (
-              <>
-                <p className="text-gray-200">{aiSummary}</p>
-                {keyPoints.length > 0 && (
-                  <ul className="text-gray-200 list-disc ml-6 mt-2">
-                    {keyPoints.map((kp, i) => (
-                      <li key={i}>{kp}</li>
-                    ))}
-                  </ul>
-                )}
-              </>
+{showModal && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+    onClick={() => setShowModal(false)}
+  >
+    <div
+      className="bg-gradient-to-r from-blue-900 via-purple-900 to-cyan-900 p-6 rounded-2xl w-full max-w-2xl shadow-2xl border border-cyan-400 transform transition-all duration-300 scale-100 sm:scale-95"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close button */}
+      <button
+        className="absolute top-4 right-4 text-4xl font-bold  text-gray-100 hover:text-red-700"
+        onClick={() => setShowModal(false)}
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+      <h2 className="text-2xl font-semibold text-cyan-300 mb-4">{publication.title}</h2>
+
+      <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
+        {loadingAI ? (
+          <p className="text-gray-400 animate-pulse">Generating summary...</p>
+        ) : (
+          <>
+            <section className="mb-4">
+              <h3 className="text-4xl text-green-300 font-semibold mb-2 text-start">Summary</h3>
+              <p className="text-gray-200 leading-relaxed whitespace-pre-line text-start">
+                {aiSummary}
+              </p>
+            </section>
+
+            {keyPoints.length > 0 && (
+              <section>
+                <h4 className="text-3xl text-green-300 font-semibold mb-2 text-start">Key Points</h4>
+                <ul className="text-gray-200 list-disc list-inside space-y-1 text-start">
+                  {keyPoints.map((kp, i) => (
+                    <li key={i}>{kp}</li>
+                  ))}
+                </ul>
+              </section>
             )}
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
+
+      {/* Read button aligned to the right */}
+      <div className="flex justify-end mt-4">
+        <a
+          href={publication.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full hover:from-blue-700 hover:to-cyan-700 transition-all duration-200"
+          onClick={(e) => {
+            e.stopPropagation();
+            addToRecentStorage(publication); // update recently opened
+          }}
+        >
+          Read  Publication
+        </a>
+      </div>
+    </div>
+  </div>
+)}
+
+
     </>
   );
 }
