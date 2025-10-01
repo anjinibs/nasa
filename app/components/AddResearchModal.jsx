@@ -1,8 +1,7 @@
-// components/AddResearchModal.js
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
-const AddResearchModal = ({ show, onClose, onResearchAdded }) => {
+const AddResearchModal = ({ show, onClose,publicationlength }) => {
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
   const [titleError, setTitleError] = useState('');
@@ -55,6 +54,7 @@ title: title
         toast.dismiss(toastId);
 
         if (result.error === "false") {
+          publicationlength()
           setLoading(false)
           onClose()
           toast.success('Added successfully!',{theme: "dark"});
@@ -96,7 +96,7 @@ title: title
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className={`w-full bg-gray-700 border ${titleError ? 'border-red-500' : 'border-gray-600'} text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              className={w-full bg-gray-700 border ${titleError ? 'border-red-500' : 'border-gray-600'} text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500}
             />
             {titleError && <p className="text-red-500 text-xs mt-1">{titleError}</p>}
           </div>
@@ -110,7 +110,7 @@ title: title
               type="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              className={`w-full bg-gray-700 border ${linkError ? 'border-red-500' : 'border-gray-600'} text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              className={w-full bg-gray-700 border ${linkError ? 'border-red-500' : 'border-gray-600'} text-white rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500}
             />
             {linkError && <p className="text-red-500 text-xs mt-1">{linkError}</p>}
           </div>
