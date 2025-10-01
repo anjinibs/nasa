@@ -88,7 +88,7 @@ export default function PublicationCard({ publication, onClick }) {
     >
       {/* Close button */}
       <button
-        className="absolute top-4 right-4 text-4xl font-bold  text-gray-100 hover:text-red-700"
+        className="absolute top-4 right-4 text-4xl font-bold  text-gray-100 hover:text-red-900"
         onClick={() => setShowModal(false)}
         aria-label="Close"
       >

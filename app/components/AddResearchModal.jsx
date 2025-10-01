@@ -32,34 +32,38 @@ const AddResearchModal = ({ show, onClose, onResearchAdded }) => {
     if (valid) {
       setLoading(true);
       setError('');
-      try {
-        const res = await fetch('/api/research', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ title, link }),
-        });
+    const toastId = toast.loading('Adding.....',{theme: "dark"});
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          if (errorData.message.includes('already exists')) {
-            toast.error('This research link already exists.');
-          } else {
-            throw new Error(errorData.error || 'Something went wrong');
-          }
+    const raw = JSON.stringify({
+link: link,
+title: title
+    });
+
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
+
+    fetch("/api/research", requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result)
+        toast.dismiss(toastId);
+
+        if (result.error === "false") {
+          setLoading(false)
+          onClose()
+          toast.success('Added successfully!',{theme: "dark"});
         } else {
-          const newResearch = await res.json();
-          onResearchAdded(newResearch);
-          onClose();
-          setTitle('');
-          setLink('');
+          setLoading(false)
+          toast.error(result.message || "failed", {theme: "dark"});
         }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      })
+      .catch((error) => console.error(error));
     }
   };
 

@@ -7,6 +7,8 @@ import PublicationCard from "./components/PublicationCard";
 import TrendingTopics from "./components/TrendingTopics";
 import DashboardPage from "./components/DashBoard";
 import Papa from "papaparse";
+import Team from "./components/Team";
+import Usecase from "./components/Usecase";
 
 // Helper to sanitize HTML from AI summary
 function stripHTML(htmlString) {
@@ -251,24 +253,13 @@ function BiosciencePage({
 // ------------------ Other Sections ------------------
 function UseCasesContent() {
   return (
-    <div className="text-white text-lg py-12">
-      <h2 className="text-2xl font-bold mb-4">Use Cases</h2>
-      <ul className="list-disc ml-6">
-        <li>Mission planning for Moon/Mars</li>
-        <li>Identifying research gaps</li>
-        <li>Supporting hypothesis generation</li>
-        <li>Education and outreach</li>
-      </ul>
-    </div>
+      <Usecase/>
   );
 }
 
 function TeamContent() {
   return (
-    <div className="text-white text-lg py-12">
-      <h2 className="text-2xl font-bold mb-4">Team</h2>
-      <p>Meet the Space Bio Engine team! Add your team info here.</p>
-    </div>
+   <Team/>
   );
 }
 
