@@ -30,7 +30,7 @@ const Explorer = () => {
         const imgData = await imgRes.json();
         const images = imgData.collection?.items || [];
 
-        const paperRes = await fetch(`/api/research?query=${encodeURIComponent(debouncedQuery)}`);
+        const paperRes = await fetch(`/api/nasaresearch?query=${encodeURIComponent(debouncedQuery)}`);
         const paperData = await paperRes.json();
         const papers = paperData.results || [];
 
