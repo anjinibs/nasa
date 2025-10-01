@@ -21,6 +21,7 @@ export default function PublicationCard({ publication, onClick }) {
       });
 
       const data = await res.json();
+      console.log(data)
       setAiSummary(data.aiSummary || "No summary available.");
       setKeyPoints(data.keyPoints || []);
     } catch (err) {
