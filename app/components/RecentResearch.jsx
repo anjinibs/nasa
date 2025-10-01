@@ -68,7 +68,7 @@ const RecentResearch = () => {
   if (error) return <p className="text-red-500">Error: {error}</p>;
 
   return (
-    <div className="bg-gray-800 shadow-lg rounded-lg p-6 relative">
+    <div className=" shadow-lg rounded-lg p-6 relative">
       <ToastContainer />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {recentResearch.map((item) => (
